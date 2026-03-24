@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LO Compilation Format Generator</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Oriya:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <!-- Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.1/dist/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body>
+
+<!-- TOAST CONTAINER -->
+<div id="toastContainer" class="toast-container"></div>
+
+<!-- ══ HEADER ══ -->
+<header class="app-header">
+  <div class="header-inner">
+    <div class="brand">
+      <div class="brand-logo"><i class="fas fa-file-contract"></i></div>
+      <div class="brand-text">
+        <span class="brand-title">LO Compilation Format Generator</span>
+        <span class="brand-subtitle">School · Cluster · Block Level</span>
+      </div>
+    </div>
+    <nav class="top-nav" id="topNav">
+      <button class="nav-btn active" data-page="dashboard"><i class="fas fa-home"></i> Home</button>
+      <button class="nav-btn" data-page="blueprint"><i class="fas fa-sitemap"></i> Blueprint</button>
+      <button class="nav-btn" data-page="students"><i class="fas fa-users"></i> Students</button>
+      <button class="nav-btn" data-page="marks"><i class="fas fa-table"></i> Marks</button>
+      <button class="nav-btn" data-page="preview"><i class="fas fa-print"></i> Report</button>
+      <div class="nav-dropdown">
+        <button class="nav-btn dropdown-trigger"><i class="fas fa-layer-group"></i> Aggregate <i class="fas fa-chevron-down" style="font-size:9px;margin-left:3px;"></i></button>
+        <div class="dropdown-menu">
+          <button data-page="cluster"><i class="fas fa-building"></i> Cluster Level</button>
+          <button data-page="block"><i class="fas fa-map"></i> Block Level</button>
+        </div>
+      </div>
+    </nav>
+    <button class="menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
+  </div>
+  <nav class="mobile-nav" id="mobileNav">
+    <button class="nav-btn" data-page="dashboard"><i class="fas fa-home"></i> Home</button>
+    <button class="nav-btn" data-page="blueprint"><i class="fas fa-sitemap"></i> Blueprint</button>
+    <button class="nav-btn" data-page="students"><i class="fas fa-users"></i> Students</button>
+    <button class="nav-btn" data-page="marks"><i class="fas fa-table"></i> Marks</button>
+    <button class="nav-btn" data-page="preview"><i class="fas fa-print"></i> Report</button>
+    <button class="nav-btn" data-page="cluster"><i class="fas fa-building"></i> Cluster</button>
+    <button class="nav-btn" data-page="block"><i class="fas fa-map"></i> Block</button>
+  </nav>
+</header>
+
+<main class="app-main">
+
+<!-- ════ PAGE: DASHBOARD ════ -->
+<section class="page active" id="page-dashboard">
+  <div class="page-header">
+    <h1><i class="fas fa-home"></i> Dashboard</h1>
+    <p>Configure report metadata, then follow the workflow: Blueprint → Students → Marks → Generate Report</p>
+  </div>
+
+  <!-- Workflow steps -->
+  <div class="card">
+    <div class="card-header"><h2><i class="fas fa-route"></i> Workflow</h2></div>
+    <div class="workflow-steps">
+      <div class="workflow-step" onclick="navigateTo('dashboard')">
+        <div class="ws-num">1</div><div class="ws-body"><strong>Configure</strong><span>School metadata</span></div>
+      </div>
+      <i class="fas fa-chevron-right ws-arrow"></i>
+      <div class="workflow-step" onclick="navigateTo('blueprint')">
+        <div class="ws-num">2</div><div class="ws-body"><strong>Blueprint</strong><span>Q.No → LO Code → Marks</span></div>
+      </div>
+      <i class="fas fa-chevron-right ws-arrow"></i>
+      <div class="workflow-step" onclick="navigateTo('students')">
+        <div class="ws-num">3</div><div class="ws-body"><strong>Students</strong><span>Enter student roster</span></div>
+      </div>
+      <i class="fas fa-chevron-right ws-arrow"></i>
+      <div class="workflow-step" onclick="navigateTo('marks')">
+        <div class="ws-num">4</div><div class="ws-body"><strong>Marks Entry</strong><span>Enter marks per question</span></div>
+      </div>
+      <i class="fas fa-chevron-right ws-arrow"></i>
+      <div class="workflow-step" onclick="navigateTo('preview')">
+        <div class="ws-num">5</div><div class="ws-body"><strong>Report</strong><span>Preview & Export</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Metadata config -->
+  <div class="card">
+    <div class="card-header">
+      <h2><i class="fas fa-gear"></i> Report Configuration</h2>
+      <span class="badge" id="sessionStatus">Not Configured</span>
+    </div>
+    <div class="metadata-grid">
+      <div class="form-group">
+        <label>District</label>
+        <input type="text" id="metaDistrict" value="GANJAM" placeholder="District" />
+      </div>
+      <div class="form-group">
+        <label>Block</label>
+        <input type="text" id="metaBlock" placeholder="Block name" />
+      </div>
+      <div class="form-group">
+        <label>Cluster</label>
+        <input type="text" id="metaCluster" placeholder="Cluster name" />
+      </div>
+      <div class="form-group">
+        <label>School Name</label>
+        <input type="text" id="metaSchool" placeholder="Full school name" />
+      </div>
+      <div class="form-group">
+        <label>Class</label>
+        <select id="metaClass">
+          <option value="">-- Select --</option>
+          <option value="I">Class I</option>
+          <option value="II">Class II</option>
+          <option value="III">Class III</option>
+          <option value="IV" selected>Class IV</option>
+          <option value="V">Class V</option>
+          <option value="VI">Class VI</option>
+          <option value="VII">Class VII</option>
+          <option value="VIII">Class VIII</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Subject</label>
+        <select id="metaSubject">
+          <option value="Mathematics" selected>Mathematics</option>
+          <option value="English">English</option>
+          <option value="Odia">Odia</option>
+          <option value="EVS">EVS</option>
+          <option value="Science">Science</option>
+          <option value="Social Science">Social Science</option>
+          <option value="History">History</option>
+          <option value="Geography">Geography</option>
+          <option value="Hindi">Hindi</option>
+          <option value="Sanskrit">Sanskrit</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Examination</label>
+        <select id="metaExam">
+          <option value="SA-I">SA-I</option>
+          <option value="SA-II" selected>SA-II</option>
+          <option value="FA-I">FA-I</option>
+          <option value="FA-II">FA-II</option>
+          <option value="FA-III">FA-III</option>
+          <option value="FA-IV">FA-IV</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Year</label>
+        <input type="text" id="metaYear" value="2025-26" placeholder="e.g. 2025-26" />
+      </div>
+      <div class="form-group">
+        <label>Language</label>
+        <select id="metaLang">
+          <option value="en">English</option>
+          <option value="od">Odia (ଓଡ଼ିଆ)</option>
+        </select>
+      </div>
+    </div>
+    <div class="card-footer">
+      <button class="btn btn-primary" id="btnSaveConfig"><i class="fas fa-save"></i> Save Configuration</button>
+      <button class="btn btn-outline" id="btnNewReport"><i class="fas fa-plus"></i> New Report</button>
+    </div>
+  </div>
+
+  <!-- Dashboard Stats -->
+  <div id="dashboardStats" class="stats-grid" style="display:none;">
+    <div class="stat-card"><div class="stat-num" id="statItems">0</div><div class="stat-label">Blueprint Items</div></div>
+    <div class="stat-card"><div class="stat-num" id="statStudents">0</div><div class="stat-label">Students</div></div>
+    <div class="stat-card"><div class="stat-num" id="statTotalMarks">0</div><div class="stat-label">Total Marks</div></div>
+    <div class="stat-card"><div class="stat-num" id="statAvgPct">—</div><div class="stat-label">Avg LO %</div></div>
+    <div class="stat-card"><div class="stat-num" id="statLoCodes">0</div><div class="stat-label">LO Codes</div></div>
+  </div>
+
+  <!-- Saved Reports -->
+  <div class="card">
+    <div class="card-header">
+      <h2><i class="fas fa-folder-open"></i> Saved Reports</h2>
+      <button class="btn btn-sm btn-outline" id="btnRefreshReports"><i class="fas fa-rotate"></i> Refresh</button>
+    </div>
+    <div id="savedReportsList">
+      <div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading…</div>
+    </div>
+  </div>
+</section>
+
+<!-- ════ PAGE: BLUEPRINT ════ -->
+<section class="page" id="page-blueprint">
+  <div class="page-header">
+    <h1><i class="fas fa-sitemap"></i> Blueprint Builder</h1>
+    <p>Map each question to an LO Code. Supports manual entry, bulk upload, and loading from the shared library.</p>
+  </div>
+
+  <div class="two-col-layout">
+    <!-- LEFT: Blueprint table -->
+    <div class="col-main">
+      <div class="card">
+        <div class="card-header">
+          <h2><i class="fas fa-table-list"></i> Question–LO Mapping</h2>
+          <div class="btn-group">
+            <button class="btn btn-primary btn-sm" id="btnBpAddRow"><i class="fas fa-plus"></i> Add Row</button>
+            <button class="btn btn-outline btn-sm" id="btnBpBulk"><i class="fas fa-upload"></i> Bulk Upload</button>
+            <button class="btn btn-outline btn-sm" id="btnBpPaste"><i class="fas fa-paste"></i> Paste CSV</button>
+            <button class="btn btn-success btn-sm" id="btnBpSave"><i class="fas fa-cloud-upload-alt"></i> Save & Share</button>
+          </div>
+        </div>
+
+        <!-- Bulk upload panel (hidden) -->
+        <div id="bulkUploadPanel" class="upload-panel" style="display:none;">
+          <div class="upload-panel-header">
+            <strong><i class="fas fa-upload"></i> Bulk Upload from Excel / CSV</strong>
+            <button class="close-btn" onclick="document.getElementById('bulkUploadPanel').style.display='none'">&times;</button>
+          </div>
+          <p class="upload-hint">Upload a file with columns: <code>Q_Label, Section, LO_Code, Marks</code></p>
+          <div class="upload-drop-zone" id="bpDropZone">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <p>Drop .xlsx or .csv file here, or click to browse</p>
+            <input type="file" id="bpFileInput" accept=".xlsx,.xls,.csv" style="display:none" />
+          </div>
+          <div class="btn-group" style="margin-top:10px;">
+            <button class="btn btn-sm btn-outline" id="btnDlTemplate"><i class="fas fa-download"></i> Download Excel Template</button>
+            <button class="btn btn-sm btn-outline" id="btnDlTemplateCsv"><i class="fas fa-download"></i> Download CSV Template</button>
+          </div>
+        </div>
+
+        <!-- Paste CSV panel (hidden) -->
+        <div id="pasteCsvPanel" class="upload-panel" style="display:none;">
+          <div class="upload-panel-header">
+            <strong><i class="fas fa-paste"></i> Paste CSV Data</strong>
+            <button class="close-btn" onclick="document.getElementById('pasteCsvPanel').style.display='none'">&times;</button>
+          </div>
+          <p class="upload-hint">Paste rows: <code>Q_Label,Section,LO_Code,Marks</code> (one per line)</p>
+          <textarea id="pasteCsvArea" rows="8" placeholder="1(a),Written,M401,2&#10;1(b),Written,M412,2&#10;1,Oral,M402,2" style="width:100%;font-size:12px;font-family:monospace;border:1px solid #e2e8f0;border-radius:6px;padding:8px;resize:vertical;"></textarea>
+          <div class="btn-group" style="margin-top:8px;">
+            <button class="btn btn-primary btn-sm" id="btnParseCsv"><i class="fas fa-check"></i> Import</button>
+            <button class="btn btn-outline btn-sm" onclick="document.getElementById('pasteCsvPanel').style.display='none'">Cancel</button>
+          </div>
+        </div>
+
+        <!-- Blueprint Table -->
+        <div class="table-responsive">
+          <table class="data-table" id="blueprintTable">
+            <thead>
+              <tr>
+                <th style="width:36px;">#</th>
+                <th style="min-width:110px;">Question Label<br><small style="font-weight:400;color:#94a3b8;">(e.g. 1(a), ୧(କ))</small></th>
+                <th style="width:90px;">Section</th>
+                <th style="min-width:160px;">LO Code <small style="font-weight:400;color:#94a3b8;">(type or pick)</small></th>
+                <th style="width:72px;">Marks</th>
+                <th style="width:44px;"></th>
+              </tr>
+            </thead>
+            <tbody id="blueprintBody">
+              <tr><td colspan="6" class="empty-row">No items yet. Click <b>Add Row</b>, upload, or load from Shared Library.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card-footer" id="bpFooter">
+          <span id="bpSummaryText" style="font-size:12px;color:#64748b;">No items</span>
+          <div class="btn-group">
+            <button class="btn btn-sm btn-outline" id="btnLoadSample"><i class="fas fa-star"></i> Load Sample (Class IV Math)</button>
+            <button class="btn btn-sm btn-success" id="btnExportLOExcel"><i class="fas fa-file-excel"></i> Generate Format Excel</button>
+            <button class="btn btn-sm btn-danger-outline" id="btnClearBp"><i class="fas fa-trash"></i> Clear All</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Blueprint Full Manual Entry Table (auto-generated from Q-LO Mapping) ── -->
+      <div class="card" id="bpPreviewCard" style="display:none;">
+        <div class="card-header">
+          <h2><i class="fas fa-table"></i> Full Manual Entry Table
+            <small style="font-size:12px;font-weight:400;color:#64748b;margin-left:8px;">Auto-generated from Question&ndash;LO Mapping</small>
+          </h2>
+          <div class="btn-group">
+            <span style="font-size:12px;color:#64748b;" id="bpPreviewSummary"></span>
+          </div>
+        </div>
+        <div class="table-responsive" style="overflow:auto;">
+          <table class="data-table bp-preview-table" id="bpPreviewTable">
+            <thead id="bpPreviewHead"></thead>
+            <tbody id="bpPreviewBody"></tbody>
+          </table>
+        </div>
+        <div class="card-footer" style="font-size:12px;color:#64748b;gap:8px;flex-wrap:wrap;">
+          <span><i class="fas fa-info-circle" style="color:#3b82f6;"></i>
+            Each column = one question. Rows = LO code groups with marks per LO.
+            Table updates automatically when blueprint changes.</span>
+          <div class="btn-group">
+            <button class="btn btn-sm btn-outline" id="btnPrintBpTable"><i class="fas fa-print"></i> Print Table</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Shared Blueprint Library -->
+      <div class="card">
+        <div class="card-header">
+          <h2><i class="fas fa-book-open"></i> Shared Library</h2>
+          <span style="font-size:12px;color:#64748b;">Load blueprints shared by other schools for same Class &amp; Subject</span>
+        </div>
+        <div class="lib-filters">
+          <select id="libFilterClass" style="width:120px;">
+            <option value="">All Classes</option>
+            <option value="I">I</option><option value="II">II</option><option value="III">III</option>
+            <option value="IV">IV</option><option value="V">V</option>
+            <option value="VI">VI</option><option value="VII">VII</option><option value="VIII">VIII</option>
+          </select>
+          <select id="libFilterSubject" style="width:150px;">
+            <option value="">All Subjects</option>
+            <option value="Mathematics">Mathematics</option>
+            <option value="English">English</option>
+            <option value="Odia">Odia</option>
+            <option value="EVS">EVS</option>
+            <option value="Science">Science</option>
+            <option value="Social Science">Social Science</option>
+            <option value="History">History</option>
+            <option value="Geography">Geography</option>
+            <option value="Hindi">Hindi</option>
+            <option value="Sanskrit">Sanskrit</option>
+          </select>
+          <button class="btn btn-sm btn-outline" id="btnLibRefresh"><i class="fas fa-rotate"></i> Refresh</button>
+        </div>
+        <div id="bpLibraryList">
+          <div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading library…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: LO Code Reference -->
+    <div class="col-side">
+      <div class="card">
+        <div class="card-header">
+          <h2><i class="fas fa-tag"></i> LO Code Reference</h2>
+          <button class="btn btn-sm btn-primary" id="btnAddNewLO"><i class="fas fa-plus"></i> Add New LO</button>
+        </div>
+
+        <!-- Add new LO form -->
+        <div id="addLOForm" style="display:none;" class="add-lo-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label>LO Code *</label>
+              <input type="text" id="newLoCode" placeholder="e.g. M401" style="text-transform:uppercase;" />
+            </div>
+            <div class="form-group">
+              <label>Subject</label>
+              <select id="newLoSubject">
+                <option value="Mathematics">Mathematics</option>
+                <option value="English">English</option>
+                <option value="Odia">Odia</option>
+                <option value="EVS">EVS</option>
+                <option value="Science">Science</option>
+                <option value="Social Science">Social Science</option>
+                <option value="History">History</option>
+                <option value="Geography">Geography</option>
+                <option value="Hindi">Hindi</option>
+                <option value="Sanskrit">Sanskrit</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Class</label>
+              <select id="newLoClass">
+                <option value="I">I</option><option value="II">II</option><option value="III">III</option>
+                <option value="IV">IV</option><option value="V">V</option>
+                <option value="VI">VI</option><option value="VII">VII</option><option value="VIII">VIII</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Description (English) *</label>
+            <input type="text" id="newLoDesc" placeholder="Learning Outcome description in English" />
+          </div>
+          <div class="form-group">
+            <label>Description (Odia)</label>
+            <input type="text" id="newLoDescOdia" placeholder="ଶିକ୍ଷଣ ଫଳ ଓଡ଼ିଆ ଭାଷାରେ" class="odia-input" />
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-primary btn-sm" id="btnSaveNewLO"><i class="fas fa-save"></i> Save LO Code</button>
+            <button class="btn btn-outline btn-sm" id="btnCancelAddLO">Cancel</button>
+          </div>
+        </div>
+
+        <div class="form-group" style="padding:0 14px;">
+          <input type="text" id="loSearchInput" placeholder="Search LO codes or descriptions…" style="width:100%;" />
+        </div>
+        <div class="lo-filter-btns">
+          <button class="lo-filter-btn active" data-filter="current">Current Subject</button>
+          <button class="lo-filter-btn" data-filter="all">All LO Codes</button>
+        </div>
+        <div id="loMasterGrid" class="lo-grid">
+          <div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════ PAGE: STUDENTS ════ -->
+<section class="page" id="page-students">
+  <div class="page-header">
+    <h1><i class="fas fa-users"></i> Student Roster</h1>
+    <p>Add students individually or import in bulk. All data saved to backend.</p>
+  </div>
+  <div class="card">
+    <div class="card-header">
+      <h2><i class="fas fa-user-plus"></i> Add Students</h2>
+      <div class="btn-group">
+        <button class="btn btn-primary btn-sm" id="btnAddStudent"><i class="fas fa-plus"></i> Add Student</button>
+        <button class="btn btn-outline btn-sm" id="btnBulkStudents"><i class="fas fa-upload"></i> Bulk Import</button>
+        <button class="btn btn-outline btn-sm" id="btnSampleStudents"><i class="fas fa-star"></i> Load Sample</button>
+      </div>
+    </div>
+
+    <!-- Single add form -->
+    <div id="singleStudentForm" style="display:none;padding:14px;border-bottom:1px solid #e2e8f0;">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Roll No.</label>
+          <input type="text" id="stuRoll" placeholder="Roll number" style="width:120px;" />
+        </div>
+        <div class="form-group" style="flex:1;">
+          <label>Student Name</label>
+          <input type="text" id="stuName" placeholder="Full name (can use Odia: ରାମ ପ୍ରସାଦ)" class="odia-input" />
+        </div>
+        <div class="form-group" style="align-self:flex-end;">
+          <button class="btn btn-primary btn-sm" id="btnConfirmAddStu"><i class="fas fa-check"></i> Add</button>
+          <button class="btn btn-outline btn-sm" onclick="document.getElementById('singleStudentForm').style.display='none'">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bulk import panel -->
+    <div id="bulkStudentPanel" style="display:none;padding:14px;border-bottom:1px solid #e2e8f0;">
+      <p style="font-size:12px;color:#64748b;margin-bottom:8px;">Paste one student per line: <code>Roll,Name</code> or just <code>Name</code></p>
+      <textarea id="bulkStuArea" rows="8" placeholder="1,Ram Prasad&#10;2,Sita Devi&#10;3,Arjun Nayak" style="width:100%;font-family:monospace;font-size:12px;border:1px solid #e2e8f0;border-radius:6px;padding:8px;resize:vertical;" class="odia-input"></textarea>
+      <div class="btn-group" style="margin-top:8px;">
+        <button class="btn btn-primary btn-sm" id="btnImportStudents"><i class="fas fa-file-import"></i> Import</button>
+        <button class="btn btn-outline btn-sm" onclick="document.getElementById('bulkStudentPanel').style.display='none'">Cancel</button>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width:44px;">#</th>
+            <th style="width:80px;">Roll No.</th>
+            <th>Student Name</th>
+            <th style="width:80px;"></th>
+          </tr>
+        </thead>
+        <tbody id="studentBody">
+          <tr><td colspan="4" class="empty-row">No students added yet.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card-footer">
+      <span id="stuCountText" style="font-size:12px;color:#64748b;">0 students</span>
+      <button class="btn btn-sm btn-danger-outline" id="btnClearStudents"><i class="fas fa-trash"></i> Clear All</button>
+    </div>
+  </div>
+</section>
+
+<!-- ════ PAGE: MARKS ════ -->
+<section class="page" id="page-marks">
+  <div class="page-header">
+    <h1><i class="fas fa-table"></i> Marks Entry</h1>
+    <p>Enter marks question-wise. Questions are grouped by LO Code. Type <b>A</b> for absent.</p>
+  </div>
+  <div class="card">
+    <div class="card-header">
+      <h2><i class="fas fa-pen-to-square"></i> Mark Sheet</h2>
+      <div class="btn-group">
+        <span id="marksStatusText" style="font-size:12px;color:#64748b;align-self:center;"></span>
+        <button class="btn btn-sm btn-outline" id="btnSaveMarks"><i class="fas fa-save"></i> Save Marks</button>
+        <button class="btn btn-sm btn-outline" id="btnClearMarks"><i class="fas fa-eraser"></i> Clear All</button>
+      </div>
+    </div>
+    <div class="marks-info-bar">
+      <span><i class="fas fa-keyboard"></i> <b>Tab/Enter</b> = next cell &nbsp;|&nbsp; <b>A</b> = Absent &nbsp;|&nbsp; <b>←→↑↓</b> = navigate</span>
+    </div>
+    <div class="marks-table-outer" id="marksTableOuter">
+      <div class="empty-state">
+        <i class="fas fa-table"></i>
+        <p>Add blueprint items and students first, then come here to enter marks.</p>
+        <button class="btn btn-primary btn-sm" onclick="navigateTo('blueprint')">Go to Blueprint</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════ PAGE: PREVIEW / REPORT ════ -->
+<section class="page" id="page-preview">
+  <div class="page-header">
+    <h1><i class="fas fa-print"></i> Format-A Report</h1>
+    <p>Official school-level LO compilation format. Export as PDF, Excel, or CSV.</p>
+  </div>
+  <div class="card">
+    <div class="card-header">
+      <h2><i class="fas fa-file-alt"></i> Report Options</h2>
+      <div class="btn-group">
+        <button class="btn btn-primary btn-sm" id="btnPrint"><i class="fas fa-print"></i> Print</button>
+        <button class="btn btn-outline btn-sm" id="btnExportPdf"><i class="fas fa-file-pdf"></i> Export PDF</button>
+        <button class="btn btn-outline btn-sm" id="btnExportExcel"><i class="fas fa-file-excel"></i> Export Excel</button>
+        <button class="btn btn-outline btn-sm" id="btnExportCsv"><i class="fas fa-file-csv"></i> Export CSV</button>
+        <button class="btn btn-outline btn-sm" id="btnRefreshPreview"><i class="fas fa-rotate"></i> Refresh</button>
+      </div>
+    </div>
+    <div id="previewContainer" class="preview-container">
+      <div class="empty-state">
+        <i class="fas fa-file-alt"></i>
+        <p>Configure report and add data to generate Format-A preview.</p>
+        <button class="btn btn-primary btn-sm" onclick="navigateTo('dashboard')">Go to Dashboard</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════ PAGE: CLUSTER ════ -->
+<section class="page" id="page-cluster">
+  <div class="page-header">
+    <h1><i class="fas fa-building"></i> Cluster Level Report</h1>
+    <p>Aggregate school-level results for a cluster. Select parameters to load and compile.</p>
+  </div>
+  <div class="card">
+    <div class="card-header"><h2><i class="fas fa-filter"></i> Cluster Filters</h2></div>
+    <div class="metadata-grid">
+      <div class="form-group"><label>Block</label><input type="text" id="clusBlock" placeholder="Block name" /></div>
+      <div class="form-group"><label>Cluster</label><input type="text" id="clusCluster" placeholder="Cluster name" /></div>
+      <div class="form-group">
+        <label>Class</label>
+        <select id="clusClass">
+          <option value="">All</option>
+          <option value="I">I</option><option value="II">II</option><option value="III">III</option>
+          <option value="IV">IV</option><option value="V">V</option>
+          <option value="VI">VI</option><option value="VII">VII</option><option value="VIII">VIII</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Subject</label>
+        <select id="clusSubject">
+          <option value="">All</option>
+          <option value="Mathematics">Mathematics</option>
+          <option value="English">English</option>
+          <option value="Odia">Odia</option>
+          <option value="EVS">EVS</option>
+          <option value="Science">Science</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Exam</label>
+        <select id="clusExam">
+          <option value="">All</option>
+          <option value="SA-I">SA-I</option>
+          <option value="SA-II">SA-II</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Year</label><input type="text" id="clusYear" placeholder="2025-26" /></div>
+    </div>
+    <div class="card-footer">
+      <button class="btn btn-primary" id="btnGenerateCluster"><i class="fas fa-chart-bar"></i> Generate Cluster Report</button>
+      <button class="btn btn-outline" id="btnExportClusterPdf"><i class="fas fa-file-pdf"></i> Export PDF</button>
+      <button class="btn btn-outline" id="btnExportClusterExcel"><i class="fas fa-file-excel"></i> Export Excel</button>
+    </div>
+  </div>
+  <div id="clusterReportContainer"></div>
+</section>
+
+<!-- ════ PAGE: BLOCK ════ -->
+<section class="page" id="page-block">
+  <div class="page-header">
+    <h1><i class="fas fa-map"></i> Block Level Report</h1>
+    <p>Aggregate cluster-level results across all schools in a block.</p>
+  </div>
+  <div class="card">
+    <div class="card-header"><h2><i class="fas fa-filter"></i> Block Filters</h2></div>
+    <div class="metadata-grid">
+      <div class="form-group"><label>Block</label><input type="text" id="blockBlock" placeholder="Block name" /></div>
+      <div class="form-group">
+        <label>Class</label>
+        <select id="blockClass">
+          <option value="">All</option>
+          <option value="I">I</option><option value="II">II</option><option value="III">III</option>
+          <option value="IV">IV</option><option value="V">V</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Subject</label>
+        <select id="blockSubject">
+          <option value="">All</option>
+          <option value="Mathematics">Mathematics</option>
+          <option value="English">English</option>
+          <option value="Odia">Odia</option>
+          <option value="EVS">EVS</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Exam</label>
+        <select id="blockExam">
+          <option value="">All</option>
+          <option value="SA-I">SA-I</option><option value="SA-II">SA-II</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Year</label><input type="text" id="blockYear" placeholder="2025-26" /></div>
+    </div>
+    <div class="card-footer">
+      <button class="btn btn-primary" id="btnGenerateBlock"><i class="fas fa-chart-bar"></i> Generate Block Report</button>
+      <button class="btn btn-outline" id="btnExportBlockPdf"><i class="fas fa-file-pdf"></i> Export PDF</button>
+      <button class="btn btn-outline" id="btnExportBlockExcel"><i class="fas fa-file-excel"></i> Export Excel</button>
+    </div>
+  </div>
+  <div id="blockReportContainer"></div>
+</section>
+
+</main>
+
+<!-- Print frame -->
+<div id="printFrame" style="display:none;"></div>
+
+<!-- Scripts -->
+<script src="js/app.js"></script>
+<script src="js/blueprint.js"></script>
+<script src="js/students.js"></script>
+<script src="js/marks.js"></script>
+<script src="js/preview.js"></script>
+<script src="js/aggregate.js"></script>
+</body>
+</html>
